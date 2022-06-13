@@ -1,12 +1,35 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-
-import { AppModule } from './app/app.module';
+import { HttpClientModule } from '@angular/common/http';
+import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { RouterModule } from '@angular/router';
+import { AppComponent } from './app/app.component';
+import { provideAuthInterceptor } from './app/shared/data-access/auth.interceptor';
 import { environment } from './environments/environment';
 
 if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    importProvidersFrom(
+      RouterModule.forRoot(
+        [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./app/layout/layout.component').then((m) => m.LayoutComponent),
+            loadChildren: () => import('./app/layout/layout.routes').then((m) => m.layoutRoutes)
+          }
+        ],
+        {
+          useHash: true,
+          scrollOffset: [0, 0],
+          scrollPositionRestoration: 'top'
+        }
+      ),
+      HttpClientModule
+    ),
+    provideAuthInterceptor()
+  ]
+}).catch((err) => console.error(err));
