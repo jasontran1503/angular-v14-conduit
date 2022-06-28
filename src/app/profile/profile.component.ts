@@ -98,7 +98,6 @@ export class ProfileComponent {
 
   isOwner = false;
   articlesType: ArticlesType = 'author';
-  username = '';
 
   articles$!: Observable<Article[]>;
   profile$ = this.route.paramMap.pipe(
@@ -108,12 +107,11 @@ export class ProfileComponent {
         return EMPTY;
       }
       return this.service.getProfile(username).pipe(
-        tap(() => (this.username = username)),
         mergeMap((profile) => {
           this.articles$ = this._changeArticlesType$.pipe(
             switchMap(() =>
               this.service
-                .getArticles(this.articlesType, this.username)
+                .getArticles(this.articlesType, username)
                 .pipe(catchError(() => of([] as Article[])))
             )
           );
