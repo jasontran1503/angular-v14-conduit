@@ -1,12 +1,15 @@
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandler,
   HttpInterceptor,
   HttpRequest,
+  HttpStatusCode,
   HTTP_INTERCEPTORS
 } from '@angular/common/http';
-import { Injectable, Provider } from '@angular/core';
-import { Observable } from 'rxjs';
+import { inject, Injectable, Provider } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, Observable, throwError } from 'rxjs';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -25,10 +28,34 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 }
 
+@Injectable()
+export class ErrorsInterceptor implements HttpInterceptor {
+  private router = inject(Router);
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    return next.handle(request).pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === HttpStatusCode.Unauthorized) {
+          localStorage.removeItem('conduit-token');
+          this.router.navigate(['/']);
+        }
+        return throwError(() => new Error(undefined));
+      })
+    );
+  }
+}
+
 export function provideAuthInterceptor(): Provider {
-  return {
-    provide: HTTP_INTERCEPTORS,
-    useClass: AuthInterceptor,
-    multi: true
-  };
+  return [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorsInterceptor,
+      multi: true
+    }
+  ];
 }

@@ -7,7 +7,7 @@ import {
   OnInit
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { takeUntil } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs';
 import { AuthService } from './shared/data-access/auth.service';
 import { DestroyService } from './shared/data-access/destroy.service';
 
@@ -34,13 +34,14 @@ export class AppComponent implements OnInit {
       this.status = 'loading';
       this.authService
         .getCurrentUser()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
+        .pipe(
+          finalize(() => {
             this.status = 'completed';
             this.cdr.markForCheck();
-          }
-        });
+          }),
+          takeUntil(this.destroy$)
+        )
+        .subscribe();
       return;
     }
 

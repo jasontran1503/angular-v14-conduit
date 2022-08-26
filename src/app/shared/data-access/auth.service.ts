@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { BehaviorSubject, map, ReplaySubject, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, map, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User, UserResponse } from './app.models';
 
@@ -17,6 +17,11 @@ export class AuthService {
       tap((user) => {
         this.setUser(user);
         this.setIsAuthenticated(true);
+      }),
+      catchError(() => {
+        this.setUser(null);
+        this.setIsAuthenticated(false);
+        return EMPTY;
       })
     );
   }
